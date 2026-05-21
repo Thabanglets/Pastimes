@@ -1,0 +1,6 @@
+Thabo Mokoena,thabo.mokoena27@gmail.com,Thabo@4821,buyer,pending
+Lerato Dlamini,lerato.dlamini84@yahoo.com,Lera#7392,seller,pending
+Sipho Nkosi,sipho.nkosi56@outlook.com,Sipho@6154,buyer,pending
+Nomsa Khumalo,nomsa.khumalo19@gmail.com,Nomsa#9083,seller,active
+Kagiso Molefe,kagiso.molefe73@gmail.com,Kagiso@7712,buyer,pendingSipho Dlamini,sipho.dlamini@gmail.com,Sipho#D2026!,seller,Pending
+Sipho Dlamini,sipho.dlamini@gmail.com,Sipho#D2026!,seller,Pending

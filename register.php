@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"> -->
+    <link rel="stylesheet" href="css/regi-style.css">
     <title>Document</title>
 </head>
 <body>
@@ -73,7 +75,7 @@ $pass = md5($_POST['user_password']);
 $aType = $_POST['account_type'];
 $Astatus = "pending";
 
-$sql ="INSERT INTO tbl_user(FullName,Email,user_Password,user_Role,account_status)VALUES('$fName','$email','$pass','$aType','$Astatus')";
+$sql ="INSERT INTO tbl_user(user_name,user_email,user_password,account_type,account_status)VALUES('$fName','$email','$pass','$aType','$Astatus')";
 
 if(mysqli_query($link,$sql)){
     echo"user added";

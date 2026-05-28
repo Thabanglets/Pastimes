@@ -2,7 +2,6 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 session_start();
-// ... rest of code
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -71,7 +70,7 @@ if (isset($_POST['login'])) {
     if (empty($email) || empty($password)) {
         $error = "Please fill in all fields.";
     } else {
-        $sql = "SELECT userID, Email, user_Password, user_Role, account_status FROM tbl_user WHERE Email = '$email'";
+        $sql = "SELECT userID, user_email, user_password, user_role, account_status FROM tbl_user WHERE user_email = '$email'";
         $result = mysqli_query($link, $sql);
 
         if (mysqli_num_rows($result) > 0) {

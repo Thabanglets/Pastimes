@@ -4,3 +4,18 @@ Sipho Nkosi,sipho.nkosi56@outlook.com,Sipho@6154,buyer,pending
 Nomsa Khumalo,nomsa.khumalo19@gmail.com,Nomsa#9083,seller,active
 Kagiso Molefe,kagiso.molefe73@gmail.com,Kagiso@7712,buyer,pendingSipho Dlamini,sipho.dlamini@gmail.com,Sipho#D2026!,seller,Pending
 Sipho Dlamini,sipho.dlamini@gmail.com,Sipho#D2026!,seller,Pending
+
+
+
+<?php
+session_start();
+include("dbCon.php");
+$_SESSION['userid'];
+$totalUser = mysqli_query($link,"SELECT COUNT(user_id) FROM tbl_user ");
+$totalProducts = mysqli_query($link,"SELECT COUNT(ItemId) FROM tbl_item ");
+$totalOrders = mysqli_query($link,"SELECT COUNT(order_id) FROM tbl_orders ");
+$pendingCount = mysqli_query($link,"SELECT COUNT(user_id) FROM tbl_user WHERE account_status = 'pending' ");
+
+$pendingUsersResult =$pendingCount;
+$productsResult =$totalProducts;
+?>

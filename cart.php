@@ -1,7 +1,7 @@
 <?php
     include("dbCon.php");
-    
-
+    session_start();
+$_SESSION['userid'] = 1;
 
     $sql ="SELECT i.Image,i.ItemName,i.Price,c.quantity,(i.Price *c.quantity) AS SubTotal 
             FROM tbl_cart c
@@ -10,6 +10,8 @@
     $result = mysqli_query($link, $sql);
 
 
+
+    
 ?>
     
 <!DOCTYPE html>
@@ -18,14 +20,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pastimes || Shopping Cart</title>
-    
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
-    
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
     <style>
@@ -224,6 +220,7 @@
             }
         }
     </style>
+
 </head>
 <body>
 
@@ -264,7 +261,6 @@
         </div>
     </header>
 
-    <!-- MAIN CONTENT -->
     <div class="container cart-wrapper">
         
         <!-- Breadcrumb -->
@@ -339,9 +335,10 @@
                         <span>R <?php echo number_format($totalprice, 2); ?></span>
                     </div>
 
-                    <button type="button" class="btn-checkout" onclick="window.location.href='checkout.php'">
-                        Proceed to Checkout
-                    </button>
+                    
+                    <button type="button" name="checkout" class="btn-checkout" onclick="window.location.href='checkout.php'">
+                             Proceed to Checkout
+                        </button>
                 </div>
             </div>
 

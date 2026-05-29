@@ -1,13 +1,61 @@
 <?php
     include("dbCon.php");
-    
+    session_start();
+$_SESSION['userid'] = 1;
 
-
+ $userId = $_SESSION['userid'];
     $sql ="SELECT i.Image,i.ItemName,i.Price,c.quantity,(i.Price *c.quantity) AS SubTotal 
             FROM tbl_cart c
             JOIN tbl_item i  ON c.product_id = i.ItemID";
+    $user = "SELECT * FROM tbl_user WHERE user_id = $userId";
+    $data = mysqli_query($link,$user);
     $totalprice = mysqli_fetch_assoc(mysqli_query($link, "SELECT SUM(i.Price *c.quantity) AS total FROM tbl_cart c JOIN tbl_item i  ON c.product_id = i.ItemID"))['total'];
     $result = mysqli_query($link, $sql);
+
+    if(isset($_POST['add'])){
+
+    $id = $_POST['itemId'];
+    // $price = $_POST['totalPrice'];
+    // $quan = $_POST['quantity'];
+
+    if (!isset($_SESSION['userid'])) {
+        die("User not logged in");
+    }
+
+   
+    $sql = "SELECT i.ItemName,c.quantity,(i.Price *c.quantity) AS Total 
+            FROM tbl_cart c 
+            JOIN tbl_item i ON c.product_id = i.ItemID 
+            WHERE user_id = '$userId'";
+    
+    $cartQuery = mysqli_query($link,$sql );
+
+    $sql = "INSERT INTO tbl_orders (user_id,total_price)
+            VALUES ('$userId','$totalprice')";
+        mysqli_query($link, $sql);
+
+    $orderId = mysqli_insert_id($link);
+
+    while($cartItem = mysqli_fetch_assoc($cartQuery)){
+
+    $itemId = $cartItem['product_id'];
+    $quantity = $cartItem['quantity'];
+    $Price = $cartItem['Total'];
+    $ItemName = $cartItem['ItemName'];
+
+    mysqli_query($link,
+        "INSERT INTO tbl_order_item(order_id, product_id,quantity,price,item_name)
+         VALUES('$orderId', '$itemId', '$quantity', '$Price', '$ItemName')"
+    );
+}
+    
+    //  $sql = "DELETE FROM tbl_cart WHERE user_id = $userId";
+    //     mysqli_query($link, $sql);
+
+    header("Location:cart.php");
+    exit();
+    
+}
 
 
 ?>
@@ -237,17 +285,18 @@
                     <!-- Contact & Shipping -->
                     <div class="mb-5">
                         <h3 class="section-title">1. Shipping Information</h3>
+                        <?php  
+                            while($row = mysqli_fetch_assoc($data)){?>
+                                <div class="form-row">
+                                    <div class="form-col">
+                                        <label class="form-label-custom">Full Name</label>
+                                        <p  class="form-control-custom" required><?php echo $row['user_name'] ?></p>
+                                    </div>
+                                </div>
+                                <label class="form-label-custom">Email Address</label>
+                                 <p  class="form-control-custom" required><?php echo $row['user_email'] ?></p>
+                            <?php } ?>
                         
-                        <div class="form-row">
-                            <div class="form-col">
-                                <label class="form-label-custom">Full Name</label>
-                                <input type="text" name="firstName" class="form-control-custom" required>
-                            </div>
-                        </div>
-
-                        <label class="form-label-custom">Email Address</label>
-                        <input type="email" name="email" class="form-control-custom" required>
-
                         <label class="form-label-custom">Phone Number</label>
                         <input type="tel" name="phone" class="form-control-custom" required>
 
@@ -267,7 +316,7 @@
 
                         <label class="form-label-custom">Country</label>
                         <select name="country" class="form-control-custom">
-                            <option value="South Africa">South Africa</option>
+                            <option value="South Africa" default>South Africa</option>
                             <option value="Zimbabwe">Zimbabwe</option>
                             <option value="Namibia">Namibia</option>
                             <option value="Botswana">Botswana</option>
@@ -337,9 +386,18 @@
                         </div>
 
                         <!-- Submit Button -->
-                        <button type="submit" name="placeOrder" class="btn-place-order">
+                         <form action="" method="post">
+                            <input type="hidden" name="itemId" value="<?php echo $row['ItemID']; ?>">
+                            <input type="hidden" name="userId" value="<?php echo $row['Image']; ?>">
+                            <input type="hidden" name="totalPrice" value="<?php echo $row['ItemName']; ?>">
+                            <input type="hidden" name="qauntity" value="<?php echo $row['Price']; ?>">
+
+                            <button type="submit" name="add" class="btn-place-order">
                             Place Order
-                        </button>
+                            </button>
+                         </form>
+
+                        
 
                         <div class="secure-icon">
                             <i class="bi bi-lock-fill"></i> Secure Checkout

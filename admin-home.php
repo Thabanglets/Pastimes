@@ -314,3 +314,6 @@ $totalOrders = $orders['totalOrders'];
                     <div class="divide-y" id="chatList">
                         <!-- Seller Chat -->
                         <div class="p-4 cursor-pointer hover:bg-gray-50
+                        
+</body>
+</html>

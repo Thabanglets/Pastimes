@@ -1,5 +1,6 @@
 <?php
 include("dbCon.php");
+$_SESSION['userid'] = 1;
 if (!isset($_GET['id'])) {
     die("No product selected.");
 }
@@ -35,7 +36,7 @@ if(isset($_POST['add'])){
 
     if (mysqli_num_rows($check) > 0) {
 
-    $sql = "UPDATE tbl_cart SET Quantity = Quantity + $quan WHERE user_id='$userId' AND product_id='$id'";
+    $sql = "UPDATE tbl_cart SET quantity = quantity + $quan WHERE user_id='$userId' AND product_id='$id'";
         mysqli_query($link, $sql);
 
     } else {
@@ -43,7 +44,9 @@ if(isset($_POST['add'])){
             VALUES ('$userId', '$id', '$quan')";
         mysqli_query($link, $sql);
     }
+    
 }
+
 
 ?>
 
@@ -317,7 +320,7 @@ if(isset($_POST['add'])){
                     </p>
 
                     <!-- Hidden Inputs -->
-                    <input type="hidden" name="itemId" value="<?php echo $row['ItemID']; ?>">
+                         <input type="hidden" name="itemId" value="<?php echo $row['ItemID']; ?>">
                             <input type="hidden" name="image" value="<?php echo $row['Image']; ?>">
                             <input type="hidden" name="itemName" value="<?php echo $row['ItemName']; ?>">
                             <input type="hidden" name="sellPrice" value="<?php echo $row['Price']; ?>">

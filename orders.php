@@ -1,3 +1,18 @@
+<?php
+session_start();
+include("dbCon.php");
+$_SESSION['userid'];
+
+
+$sql = "SELECT * FROM tbl_orders";
+$result = mysqli_query($link,$sql);
+$totalOrders = mysqli_query($link,"SELECT COUNT(*) FROM tbl_orders ");
+$totalOrder = mysqli_fetch_assoc($totalOrders);
+$totalpending = mysqli_query($link,"SELECT COUNT(*) FROM tbl_orders WHERE order_status = 'pending' ");
+
+
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -395,25 +410,38 @@
             <h1 class="page-title">Orders Management</h1>
         </div>
 
+        <?php 
+            if(mysqli_num_rows($result)>0){?>
+
+                <?php 
+                    while($row = mysqli_fetch_assoc($result)){?>
+                    <div class="stats-row">
+                        <div class="stat-box active">
+                            <div class="stat-count"><?php echo $totalOrder ?></div>
+                            <div class="stat-label">All Orders</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-count">4</div>
+                            <div class="stat-label">Pending</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-count">6</div>
+                            <div class="stat-label">Shipped</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-count">2</div>
+                            <div class="stat-label">Delivered</div>
+                        </div>
+                    </div>
+
+
+                   <?php }?>
+
+           <?php }
+        
+        ?>
         <!-- Stats Tabs -->
-        <div class="stats-row">
-            <div class="stat-box active">
-                <div class="stat-count">12</div>
-                <div class="stat-label">All Orders</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-count">4</div>
-                <div class="stat-label">Pending</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-count">6</div>
-                <div class="stat-label">Shipped</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-count">2</div>
-                <div class="stat-label">Delivered</div>
-            </div>
-        </div>
+        
 
         <!-- Filter Bar -->
         <!-- <div class="filter-bar">

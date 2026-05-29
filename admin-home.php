@@ -12,6 +12,7 @@ $userData = mysqli_fetch_assoc($userQuery);
 $userPending = mysqli_fetch_assoc($userQuery2);
 $totalItem = mysqli_fetch_assoc($userQuery3);
 $orders = mysqli_fetch_assoc($userQuery4);
+
 $totalUser = $userData['total'];
 $pendingCount = $userPending['pending'];
 $totalProducts = $totalItem['totalItem'];

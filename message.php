@@ -36,7 +36,7 @@
         </div>
 
         <nav class="flex-1 p-4 space-y-2">
-            <a href="seller_Dashboard.php" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition">
+            <a href="seller-Home.php" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition">
                 <i class="bi bi-grid-1x2-fill"></i> <span class="font-medium">Dashboard</span>
             </a>
             <a href="addListing.php" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition">
@@ -48,7 +48,7 @@
             <a href="customers.php" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition">
                 <i class="bi bi-people-fill"></i> <span class="font-medium">Customers</span>
             </a>
-            <a href="messages.php" class="flex items-center gap-3 px-4 py-3 rounded-lg bg-gray-900 text-white transition">
+            <a href="message.php" class="flex items-center gap-3 px-4 py-3 rounded-lg bg-gray-900 text-white transition">
                 <i class="bi bi-chat-dots-fill"></i> <span class="font-medium">Messages</span>
             </a>
         </nav>

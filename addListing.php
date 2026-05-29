@@ -312,7 +312,7 @@
         </div>
 
         <nav class="sidebar-nav">
-            <a href="seller_Dashboard.php" class="nav-link">
+            <a href="seller-Home.php" class="nav-link">
                 <i class="bi bi-grid-1x2-fill"></i> <span>Dashboard</span>
             </a>
             <a href="addListing.php" class="nav-link active">
@@ -321,7 +321,7 @@
             <a href="orders.php" class="nav-link">
                 <i class="bi bi-bag-fill"></i> <span>Orders</span>
             </a>
-            <a href="messages.php" class="nav-link">
+            <a href="message.php" class="nav-link">
                 <i class="bi bi-chat-dots-fill"></i> <span>Messages</span>
             </a>
         </nav>

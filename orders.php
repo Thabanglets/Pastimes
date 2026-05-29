@@ -2,14 +2,29 @@
 session_start();
 include("dbCon.php");
 $_SESSION['userid'];
-
-
+$data = "SELECT o.order_id,(u.user_name) AS name , (u.user_email) AS email,i.ItemName,o.order_date,(i.Price*c.quantity) AS Amount,o.order_status from 
+tbl_order_item oi 
+JOIN tbl_orders o ON oi.order_id = o.order_id 
+JOIN tbl_user u ON o.user_id = u.user_id 
+JOIN tbl_item i on i.ItemID = oi.product_id 
+JOIN tbl_cart c on i.ItemID = c.product_id";
+$resultView = mysqli_query($link,$data);
 $sql = "SELECT * FROM tbl_orders";
 $result = mysqli_query($link,$sql);
-$totalOrders = mysqli_query($link,"SELECT COUNT(*) FROM tbl_orders ");
-$totalOrder = mysqli_fetch_assoc($totalOrders);
-$totalpending = mysqli_query($link,"SELECT COUNT(*) FROM tbl_orders WHERE order_status = 'pending' ");
+$userQuery4 = mysqli_query($link, "SELECT COUNT(order_id) AS totalOrders FROM tbl_orders");
+$userQuery3 = mysqli_query($link, "SELECT COUNT(order_id) AS pendingOrders FROM tbl_orders WHERE order_status ='pending'");
+$userQuery2 = mysqli_query($link, "SELECT COUNT(order_id) AS shippedOrders FROM tbl_orders WHERE order_status ='shipped'");
+$userQuery1 = mysqli_query($link, "SELECT COUNT(order_id) AS deliveredOrders FROM tbl_orders WHERE order_status ='delivered'");
 
+
+$orders = mysqli_fetch_assoc($userQuery4);
+$totalOrders = $orders['totalOrders'];
+$pendingOrders = mysqli_fetch_assoc($userQuery3);
+$pendingCount = $pendingOrders['pendingOrders'];
+$shippedOrders = mysqli_fetch_assoc($userQuery2);
+$shippedCount = $shippedOrders['shippedOrders'];
+$deliveredOrders = mysqli_fetch_assoc($userQuery1);
+$deliveredCount = $deliveredOrders['deliveredOrders'];
 
 ?>
 
@@ -383,7 +398,7 @@ $totalpending = mysqli_query($link,"SELECT COUNT(*) FROM tbl_orders WHERE order_
         </div>
 
         <nav class="sidebar-nav">
-            <a href="seller_Dashboard.php" class="nav-link">
+            <a href="seller-Home.php" class="nav-link">
                 <i class="bi bi-grid-1x2-fill"></i> <span>Dashboard</span>
             </a>
             <a href="addListing.php" class="nav-link">
@@ -392,7 +407,7 @@ $totalpending = mysqli_query($link,"SELECT COUNT(*) FROM tbl_orders WHERE order_
             <a href="orders.php" class="nav-link active">
                 <i class="bi bi-bag-fill"></i> <span>Orders</span>
             </a>
-            <a href="messages.php" class="nav-link">
+            <a href="message.php" class="nav-link">
                 <i class="bi bi-chat-dots-fill"></i> <span>Messages</span>
             </a>
         </nav>
@@ -417,19 +432,19 @@ $totalpending = mysqli_query($link,"SELECT COUNT(*) FROM tbl_orders WHERE order_
                     while($row = mysqli_fetch_assoc($result)){?>
                     <div class="stats-row">
                         <div class="stat-box active">
-                            <div class="stat-count"><?php echo $totalOrder ?></div>
+                            <div class="stat-count"><?php echo $totalOrders ?></div>
                             <div class="stat-label">All Orders</div>
                         </div>
                         <div class="stat-box">
-                            <div class="stat-count">4</div>
+                            <div class="stat-count"><?php echo $pendingCount ?></div>
                             <div class="stat-label">Pending</div>
                         </div>
                         <div class="stat-box">
-                            <div class="stat-count">6</div>
+                            <div class="stat-count"><?php echo $shippedCount ?></div>
                             <div class="stat-label">Shipped</div>
                         </div>
                         <div class="stat-box">
-                            <div class="stat-count">2</div>
+                            <div class="stat-count"><?php echo $deliveredCount ?></div>
                             <div class="stat-label">Delivered</div>
                         </div>
                     </div>
@@ -470,124 +485,35 @@ $totalpending = mysqli_query($link,"SELECT COUNT(*) FROM tbl_orders WHERE order_
                     </tr>
                 </thead>
                 <tbody>
-                    <!-- Example Data Row 1 -->
-                    <tr>
-                        <td>#ORD-92831</td>
-                        <td>
-                            <div class="customer-cell">
-                                <div class="customer-avatar">JD</div>
-                                <div class="customer-info">
-                                    <h4>John Doe</h4>
-                                    <p>john@example.com</p>
-                                </div>
-                            </div>
-                        </td>
-                        <td>Burberry Trench Coat</td>
-                        <td>Oct 24, 2023</td>
-                        <td>R450.00</td>
-                        <td><span class="status-badge badge-processing">Processing</span></td>
-                        <td>
-                            <button class="action-btn">View</button>
-                            <button class="action-btn">Ship</button>
-                        </td>
-                    </tr>
-
-                    <!-- Example Data Row 2 -->
-                    <tr>
-                        <td>#ORD-92755</td>
-                        <td>
-                            <div class="customer-cell">
-                                <div class="customer-avatar">AS</div>
-                                <div class="customer-info">
-                                    <h4>Alice Smith</h4>
-                                    <p>alice@example.com</p>
-                                </div>
-                            </div>
-                        </td>
-                        <td>Running Sneakers</td>
-                        <td>Oct 23, 2023</td>
-                        <td>R120.00</td>
-                        <td><span class="status-badge badge-shipped">Shipped</span></td>
-                        <td>
-                            <button class="action-btn">View</button>
-                            <button class="action-btn">Track</button>
-                        </td>
-                    </tr>
-
-                    <!-- Example Data Row 3 -->
-                    <tr>
-                        <td>#ORD-92612</td>
-                        <td>
-                            <div class="customer-cell">
-                                <div class="customer-avatar">BJ</div>
-                                <div class="customer-info">
-                                    <h4>Bob Jones</h4>
-                                    <p>bob@example.com</p>
-                                </div>
-                            </div>
-                        </td>
-                        <td>Floral Summer Dress</td>
-                        <td>Oct 22, 2023</td>
-                        <td>R85.00</td>
-                        <td><span class="status-badge badge-delivered">Delivered</span></td>
-                        <td>
-                            <button class="action-btn">View</button>
-                            <button class="action-btn">Invoice</button>
-                        </td>
-                    </tr>
-
-                    <!-- Example Data Row 4 -->
-                    <tr>
-                        <td>#ORD-92500</td>
-                        <td>
-                            <div class="customer-cell">
-                                <div class="customer-avatar">MK</div>
-                                <div class="customer-info">
-                                    <h4>Mary Kim</h4>
-                                    <p>mary@example.com</p>
-                                </div>
-                            </div>
-                        </td>
-                        <td>Denim Jacket</td>
-                        <td>Oct 21, 2023</td>
-                        <td>R200.00</td>
-                        <td><span class="status-badge badge-cancelled">Cancelled</span></td>
-                        <td>
-                            <button class="action-btn">View</button>
-                        </td>
-                    </tr>
-
-                    <!-- 
-                    You can uncomment and loop your PHP rows here:
-                    <?php while ($row = mysqli_fetch_assoc($result)) { ?>
+                   
+                    <?php while ($row = mysqli_fetch_assoc($resultView)) { ?>
                     <tr>
                         <td>#ORD-<?php echo $row['order_id']; ?></td>
                         <td>
                             <div class="customer-cell">
-                                <div class="customer-avatar"><?php echo substr($row['customer_name'], 0, 1); ?></div>
+                                <div class="customer-avatar"><?php echo substr($row['name'], 0, 1); ?></div>
                                 <div class="customer-info">
-                                    <h4><?php echo $row['customer_name']; ?></h4>
-                                    <p><?php echo $row['customer_email']; ?></p>
+                                    <h4><?php echo $row['name']; ?></h4>
+                                    <p><?php echo $row['email']; ?></p>
                                 </div>
                             </div>
                         </td>
                         <td><?php echo $row['ItemName']; ?></td>
                         <td><?php echo $row['order_date']; ?></td>
-                        <td>R <?php echo number_format($row['total_price'], 2); ?></td>
+                        <td>R <?php echo number_format($row['Amount'], 2); ?></td>
                         <td>
-                            <span class="status-badge badge-<?php echo strtolower($row['status']); ?>">
-                                <?php echo $row['status']; ?>
+                            <span class="status-badge badge-<?php echo strtolower($row['order_status']); ?>">
+                                <?php echo $row['order_status']; ?>
                             </span>
                         </td>
                         <td>
                             <a href="view_order.php?id=<?php echo $row['order_id']; ?>" class="action-btn">View</a>
-                            <?php if($row['status'] == 'Processing') { ?>
+                            <?php if($row['order_status'] == 'Processing') { ?>
                             <a href="ship_order.php?id=<?php echo $row['order_id']; ?>" class="action-btn">Ship</a>
                             <?php } ?>
                         </td>
                     </tr>
                     <?php } ?> 
-                    -->
                 </tbody>
             </table>
         </div>

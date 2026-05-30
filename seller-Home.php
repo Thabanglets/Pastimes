@@ -1,3 +1,24 @@
+<?php
+session_start();
+include("dbCon.php");
+
+// Check if user is logged in
+if (!isset($_SESSION['userid'])) {
+    header("Location: login.php");
+    exit();
+}
+$userId = $_SESSION['userid'];
+
+// Get logged-in user details
+$userQuery = mysqli_query($link, "SELECT * FROM tbl_user WHERE user_id = '$userId'");
+$user = mysqli_fetch_assoc($userQuery);
+
+// Optional: Ensure only sellers can access
+if ($user['account_type'] != 'seller') {
+    header("Location: login.php");
+    exit();
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -509,17 +530,7 @@
                         <td><span class="status-badge status-delivered">Delivered</span></td>
                     </tr> -->
 
-                    <!-- You can uncomment and loop your PHP rows here
-                    <?php while ($row = mysqli_fetch_assoc($orders_result)) { ?>
-                    <tr>
-                        <td><?php echo $row['ItemName']; ?></td>
-                        <td>#ORD-<?php echo $row['order_id']; ?></td>
-                        <td><?php echo $row['order_date']; ?></td>
-                        <td>R <?php echo $row['Price']; ?></td>
-                        <td><span class="status-badge status-<?php echo strtolower($row['status']); ?>"><?php echo $row['status']; ?></span></td>
-                    </tr>
-                    <?php } ?> 
-                    -->
+                    
                 </tbody>
             </table>
         </div>

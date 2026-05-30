@@ -1,17 +1,44 @@
 <?php
-    include("dbCon.php");
-    session_start();
-$_SESSION['userid'] = 1;
+include("dbCon.php");
+session_start();
 
-    $sql ="SELECT i.Image,i.ItemName,i.Price,c.quantity,(i.Price *c.quantity) AS SubTotal 
-            FROM tbl_cart c
-            JOIN tbl_item i  ON c.product_id = i.ItemID";
-    $totalprice = mysqli_fetch_assoc(mysqli_query($link, "SELECT SUM(i.Price *c.quantity) AS total FROM tbl_cart c JOIN tbl_item i  ON c.product_id = i.ItemID"))['total'];
-    $result = mysqli_query($link, $sql);
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit();
+}
 
+$userId = $_SESSION['user_id'];
 
+$sql = "SELECT
+        i.Image,
+        i.ItemName,
+        i.Price,
+        c.quantity,
+        (i.Price * c.quantity) AS SubTotal
+    FROM tbl_cart c
+    JOIN tbl_item i ON c.product_id = i.ItemID
+    WHERE c.user_id = '$userId'
+";
+$cartQuery = mysqli_query($link, "SELECT COUNT(*) AS cart
+        FROM tbl_cart
+        WHERE user_id = '$userId'
+    ");
 
+    $cartData = mysqli_fetch_assoc($cartQuery);
+    $cartCount = $cartData['cart'];
     
+$result = mysqli_query($link, $sql);
+
+// Total for logged-in user only
+$totalQuery = mysqli_query(
+    $link,
+    "SELECT SUM(i.Price * c.quantity) AS total
+     FROM tbl_cart c
+     JOIN tbl_item i ON c.product_id = i.ItemID
+     WHERE c.user_id = '$userId'"
+);
+
+$totalprice = mysqli_fetch_assoc($totalQuery)['total'] ?? 0;
 ?>
     
 <!DOCTYPE html>
@@ -247,7 +274,7 @@ $_SESSION['userid'] = 1;
                     <a href="cart.php" class="nav-link-custom">
                         Cart 
                         <!-- Placeholder for Cart Count PHP -->
-                        (<?php echo mysqli_fetch_assoc(mysqli_query($link, "SELECT COUNT(*) AS cart FROM tbl_cart"))['cart']; ?>)
+                        (<?php echo $cartCount; ?>)
                     </a>
                 </div>
             </div>

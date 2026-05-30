@@ -1,34 +1,75 @@
 <?php
 session_start();
 include("dbCon.php");
-$_SESSION['userid'] = 1;
-$result = mysqli_query($link,"SELECT * FROM tbl_item WHERE Gender = 'Male'");
 
-if(isset($_POST['add'])){
+$result = mysqli_query($link, "SELECT * FROM tbl_item WHERE Gender = 'Male'");
 
-    $id = $_POST['itemId'];
-    $price = $_POST['sellPrice'];
-    $quan = $_POST['quantity'];
+$userData = null;
+$cartCount = 0;
 
-    if (!isset($_SESSION['userid'])) {
-        die("User not logged in");
-    }
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit();
+}
 
-    $userId = $_SESSION['userid'];
-    $sql = "SELECT * FROM tbl_cart WHERE user_id = '$userId' AND product_id = '$id'";
+$userId = intval($_SESSION['user_id']);
 
-    
-    $check = mysqli_query($link,$sql );
+// Get logged-in user
+$userQuery = mysqli_query(
+    $link,
+    "SELECT * FROM tbl_user WHERE user_id = $userId"
+);
+
+$userData = mysqli_fetch_assoc($userQuery);
+
+if (!$userData) {
+    session_destroy();
+    header("Location: login.php");
+    exit();
+}
+
+// Get cart count for this user
+$cartQuery = mysqli_query(
+    $link,
+    "SELECT COUNT(*) AS cart
+     FROM tbl_cart
+     WHERE user_id = $userId"
+);
+
+$cartData = mysqli_fetch_assoc($cartQuery);
+$cartCount = $cartData['cart'];
+
+// Add to cart
+if (isset($_POST['add'])) {
+
+    $productId = intval($_POST['itemId']);
+    $quantity = 1;
+
+    $check = mysqli_query(
+        $link,
+        "SELECT * FROM tbl_cart
+         WHERE user_id = $userId
+         AND product_id = $productId"
+    );
 
     if (mysqli_num_rows($check) > 0) {
 
-    $sql = "UPDATE tbl_cart SET Quantity = Quantity + $quan WHERE user_id='$userId' AND product_id='$id'";
-        mysqli_query($link, $sql);
+        mysqli_query(
+            $link,
+            "UPDATE tbl_cart
+             SET quantity = quantity + 1
+             WHERE user_id = $userId
+             AND product_id = $productId"
+        );
 
     } else {
-        $sql = "INSERT INTO tbl_cart (user_id, product_id, quantity)
-            VALUES ('$userId', '$id', '$quan')";
-        mysqli_query($link, $sql);
+
+        mysqli_query(
+            $link,
+            "INSERT INTO tbl_cart(user_id, product_id, quantity)
+             VALUES($userId, $productId, $quantity)"
+        );
+
     }
 }
 ?>
@@ -38,7 +79,7 @@ if(isset($_POST['add'])){
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pastimes || Womens Collection</title>
+    <title>Pastimes || Mens Collection</title>
     
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
@@ -219,13 +260,20 @@ if(isset($_POST['add'])){
                     <a href="cart.php" class="nav-link-custom">
                         Cart 
                         <!-- Placeholder for Cart Count PHP -->
-                        (<?php echo mysqli_fetch_assoc(mysqli_query($link, "SELECT COUNT(*) AS cart FROM tbl_cart"))['cart']; ?>)
-                    </a>
+                       (<?php echo $cartCount; ?>)
                 </div>
             </div>
         </nav>
     </header>
+<div class="container mt-3">
+    <h5>Welcome,
+        <?php echo htmlspecialchars($userData['user_name']); ?>
+    </h5>
 
+    <p>Email:
+        <?php echo htmlspecialchars($userData['user_email']); ?>
+    </p>
+</div>
     <div class="container page-wrapper">
         <div class="row">
             <!-- SIDEBAR FILTERS -->

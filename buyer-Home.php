@@ -1,13 +1,33 @@
 <?php
 session_start();
     include("dbCon.php");
-   
+   $userData = null;
+$cartCount = 0;
 
-    if (isset($_SESSION['userId'])) {
-        echo "Logged in as User ID: " . $_SESSION['userId'];
-    } else {
-        echo "No user logged in";
-    }
+if (isset($_SESSION['user_id'])) {
+
+    $userId = $_SESSION['user_id'];
+    $sql = "SELECT * FROM tbl_user WHERE user_id = '$userId'";
+    // Get user details
+    $userQuery = mysqli_query($link, $sql);
+
+    $userData = mysqli_fetch_assoc($userQuery);
+
+    // Get this user's cart count
+    $cartQuery = mysqli_query($link, "SELECT COUNT(*) AS cart
+        FROM tbl_cart
+        WHERE user_id = '$userId'
+    ");
+
+    $cartData = mysqli_fetch_assoc($cartQuery);
+    $cartCount = $cartData['cart'];
+
+} else {
+
+    header("Location: login.php");
+    exit();
+
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -54,11 +74,13 @@ session_start();
                     <a href="cart.php" class="nav-icon">
                         Cart 
                         <!-- Placeholder for Cart Count PHP -->
-                        (<?php echo mysqli_fetch_assoc(mysqli_query($link, "SELECT COUNT(*) AS cart FROM tbl_cart"))['cart']; ?>)
+                        (<?php echo $cartCount; ?>)
                     </a>
                 </div>
             </div>
         </nav>
+
+        
 
         <!-- Sub Navigation (Categories) -->
         <div class="sub-navbar" style="background:#fff; padding: 10px 0; border-bottom:1px solid #eee; position:sticky; top:73px; z-index:999;">
@@ -68,7 +90,16 @@ session_start();
             </div>
         </div>
     </header>
+    
+<div class="container mt-3">
+    <h5>Welcome,
+        <?php echo htmlspecialchars($userData['user_name']); ?>
+    </h5>
 
+    <p>Email:
+        <?php echo htmlspecialchars($userData['user_email']); ?>
+    </p>
+</div>
     <main>
         
         <section class="hero-section">

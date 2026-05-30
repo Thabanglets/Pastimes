@@ -1,76 +1,95 @@
 <?php
-// 1. LOGIC MUST BE AT THE TOP
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 session_start();
-include("dbCon.php"); // Ensure this file connects to DB correctly
+include("dbCon.php");
 
 $error = "";
 
 if (isset($_POST['login'])) {
 
     $email = trim($_POST['email'] ?? '');
-    $password = $_POST['pass'] ?? ''; // Don't hash yet, we need it raw to verify
+    // $password = md5(trim($_POST['pass'] ?? ''));
+    $password = trim($_POST['pass'] ?? '');
 
     if (empty($email) || empty($password)) {
         $error = "Please fill in all fields.";
     } else {
+
         $sql = "SELECT 
-                    `user_id`, 
-                    user_email, 
-                    user_password, 
-                    account_type
-                    account_status 
-                FROM tbl_user 
+                    user_id,
+                    user_email,
+                    user_password,
+                    account_type,
+                    account_status
+                FROM tbl_user
                 WHERE user_email = ?";
 
         $stmt = mysqli_prepare($link, $sql);
+
+        if (!$stmt) {
+            die("SQL Error: " . mysqli_error($link));
+        }
+
         mysqli_stmt_bind_param($stmt, "s", $email);
         mysqli_stmt_execute($stmt);
+
         $result = mysqli_stmt_get_result($stmt);
 
-        if (mysqli_num_rows($result) > 0) {
-            
+        if ($result && mysqli_num_rows($result) > 0) {
+
             $row = mysqli_fetch_assoc($result);
 
-            // SECURITY FIX: Use password_verify instead of plain MD5 comparison
-            // NOTE: If your DB passwords are plain MD5, change 'user_password' column to use password_hash()
-            // Assuming here the DB stores MD5 hash for legacy reasons, but ideally use Bcrypt.
-            // Below checks the specific MD5 string (as per your original code logic):
-            if ($password == $row['user_password']) { // In real apps: password_verify($password, $row['user_password'])
+            // DEBUGGING (remove after testing)
+            /*
+            echo "<pre>";
+            print_r($row);
+            echo "</pre>";
+            exit();
+            */
 
-                if ($row['account_status'] == 'active') {
+            // If passwords are stored as plain text
+            if ($password === $row['user_password']) {
+
+                // Check account status
+                if (strtolower(trim($row['account_status'])) === 'approved') {
 
                     $_SESSION['user_id'] = $row['user_id'];
                     $_SESSION['email'] = $row['user_email'];
-                    
-                    // Handle Role Redirect
-                    $role = $row['account_type']; // Ensure this column exists in DB
+                    $_SESSION['role'] = $row['account_type'];
 
-                    switch ($role) {
+                    switch (strtolower($row['account_type'])) {
+
                         case 'admin':
                             header("Location: admin-dashboard.php");
                             exit();
+
                         case 'buyer':
-                            header("Location: buyer-Home.php");
+                            header("Location: buyer-home.php");
                             exit();
+
                         case 'seller':
-                            header("Location: seller-dashboard.php");
+                            header("Location: seller-Home.php");
                             exit();
+
                         default:
                             $error = "Unknown user role.";
                     }
 
                 } else {
-                    $error = "Account is disabled.";
+                    $error = "Your account is not approved yet. Current status: " . $row['account_status'];
                 }
+
             } else {
                 $error = "Invalid password.";
             }
+
         } else {
             $error = "User not found.";
         }
+
+        mysqli_stmt_close($stmt);
     }
 }
 ?>

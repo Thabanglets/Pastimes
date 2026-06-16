@@ -62,7 +62,7 @@ if (isset($_POST['login'])) {
                     switch (strtolower($row['account_type'])) {
 
                         case 'admin':
-                            header("Location: admin-dashboard.php");
+                            header("Location: admin-home.php");
                             exit();
 
                         case 'buyer':

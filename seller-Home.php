@@ -3,11 +3,11 @@ session_start();
 include("dbCon.php");
 
 // Check if user is logged in
-if (!isset($_SESSION['userid'])) {
-    header("Location: login.php");
-    exit();
+if (!isset($_SESSION['user_id'])) {
+    // header("Location: login.php");
+    // exit();
 }
-$userId = $_SESSION['userid'];
+$userId = $_SESSION['user_id'];
 
 // Get logged-in user details
 $userQuery = mysqli_query($link, "SELECT * FROM tbl_user WHERE user_id = '$userId'");

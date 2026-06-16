@@ -1,3 +1,8 @@
+<?php
+// add the logic to handle form submission and database insertion here
+
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>

@@ -19,6 +19,8 @@ if (isset($_SESSION['user_id'])) {
         WHERE user_id = '$userId'
     ");
 
+    
+
     $cartData = mysqli_fetch_assoc($cartQuery);
     $cartCount = $cartData['cart'];
 
@@ -46,49 +48,29 @@ if (isset($_SESSION['user_id'])) {
 <body>
 
     
-    <header>
+        <header>
         <nav class="navbar navbar-expand-lg navbar-light navbar-custom fixed-top">
             <div class="container">
-                <a class="navbar-brand" href="#">PASTIMES</a>
-                
+                <a class="navbar-brand" href="buyer-Home.php">PASTIMES</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                     <span class="navbar-toggler-icon"></span>
                 </button>
 
                 <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
                     <ul class="navbar-nav">
-                        <li class="nav-item">
-                            <a class="nav-link-custom" href="womens_fashion.php">Women</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link-custom active" href="buyer-Home.php">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link-custom" href="Mens_fashion.php">Men</a>
-                        </li>
+                        <li class="nav-item"><a class="nav-link-custom" href="womens_fashion.php">Women</a></li>
+                        <li class="nav-item"><a class="nav-link-custom" href="buyer-Home.php">Home</a></li>
+                        <li class="nav-item"><a class="nav-link-custom" href="Mens_fashion.php">Men</a></li>
                     </ul>
                 </div>
 
                 <div class="d-none d-lg-flex align-items-center">
-                    <a href="#profile" class="nav-icon">Account</a>
-                    <a href="cart.php" class="nav-icon">
-                        Cart 
-                        <!-- Placeholder for Cart Count PHP -->
-                        (<?php echo $cartCount; ?>)
-                    </a>
+                    <a href="#profile" class="nav-link-custom">Account</a>
+                    <a href="track_order.php" class="nav-link-custom">Track Orders</a>
+                    <a href="cart.php" class="nav-link-custom">Cart (<?php echo $cartCount; ?>)</a>
                 </div>
             </div>
         </nav>
-
-        
-
-        <!-- Sub Navigation (Categories) -->
-        <div class="sub-navbar" style="background:#fff; padding: 10px 0; border-bottom:1px solid #eee; position:sticky; top:73px; z-index:999;">
-            <div class="container d-flex justify-content-center gap-4">
-                <a href="explore_product.php" style="text-decoration:none; color:#555; font-size:0.85rem; text-transform:uppercase;">Clothing</a>
-                <a href="tops&sweaters.php" style="text-decoration:none; color:#555; font-size:0.85rem; text-transform:uppercase;">Tops & Sweaters</a>
-            </div>
-        </div>
     </header>
     
 
@@ -127,22 +109,22 @@ if (isset($_SESSION['user_id'])) {
             <div class="row g-4">
                 <div class="col-md-4">
                     <div class="grid-card" style="height: 300px;">
-                        <img src="https://images.unsplash.com/photo-1620799140408-ed5341cd2431?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Tops">
+                        <img src="img/swaeter1.jpeg" alt="Tops">
                         <a href="tops&sweaters.php" class="grid-label">Tops & Sweaters</a>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="grid-card" style="height: 300px;">
                         <img src="https://images.unsplash.com/photo-1591047139829-d91aecb6caea?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Jackets">
-                        <a href="Mens_fashion.php" class="grid-label">Jackets</a>
+                        <a href="jacket.php" class="grid-label">Jackets</a>
                     </div>
                 </div>
-                <div class="col-md-4">
+                <!-- <div class="col-md-4">
                     <div class="grid-card" style="height: 300px;">
                         <img src="https://images.unsplash.com/photo-1542272454315-4c01d7abdf4a?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Jeans">
-                        <a href="Mens_fashion.php" class="grid-label">Jeans</a>
+                        <a href="Jeans.php" class="grid-label">Jeans</a>
                     </div>
-                </div>
+                </div> -->
             </div>
         </section>
     </main>

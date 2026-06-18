@@ -12,14 +12,14 @@ include("dbCon.php");
 if (isset($_GET['approve_user'])) {
     $id = intval($_GET['approve_user']);
     mysqli_query($link, "UPDATE tbl_user SET account_status = 'approved' WHERE user_id = $id");
-    header("Location: admin_dashboard.php");
+    header("Location: admin-home.php");
     exit();
 }
 
-if (isset($_GET['reject_user'])) {
-    $id = intval($_GET['reject_user']);
-    mysqli_query($link, "DELETE FROM tbl_user WHERE user_id = $id");
-    header("Location: admin_dashboard.php");
+if (isset($_GET['decline_user'])) {
+    $id = intval($_GET['decline_user']);
+    mysqli_query($link, "UPDATE tbl_user SET account_status = 'declined' WHERE user_id = $id");
+    header("Location: admin-home.php");
     exit();
 }
 
@@ -317,13 +317,15 @@ $totalOrders = $orders['totalOrders'];
                                 <td class="text-end">
 
                                     <a href="?approve_user=<?php echo $u['user_id']; ?>"
-                                       class="btn btn-success btn-sm">
-                                        <i class="bi bi-check-lg"></i>
+                                       class="btn btn-success btn-sm"
+                                       title="Approve User">
+                                        <i class="bi bi-check-lg"></i> Approve
                                     </a>
 
-                                    <a href="?reject_user=<?php echo $u['user_id']; ?>"
-                                       class="btn btn-danger btn-sm">
-                                        <i class="bi bi-x-lg"></i>
+                                    <a href="?decline_user=<?php echo $u['user_id']; ?>"
+                                       class="btn btn-danger btn-sm"
+                                       title="Decline User">
+                                        <i class="bi bi-x-lg"></i> Decline
                                     </a>
 
                                 </td>

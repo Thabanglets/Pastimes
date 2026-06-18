@@ -1,6 +1,97 @@
 <?php
-// add the logic to handle form submission and database insertion here
+session_start();
+include("dbCon.php");
 
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit();
+}
+
+$userId = (int) $_SESSION['user_id'];
+$message = '';
+
+$ownerColumn = '';
+$columnCheck = mysqli_query(
+    $link,
+    "SELECT COUNT(*) AS cnt FROM information_schema.columns WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tbl_item' AND COLUMN_NAME = 'seller_id'"
+);
+if ($columnCheck) {
+    $columnRow = mysqli_fetch_assoc($columnCheck);
+    if ((int) $columnRow['cnt'] > 0) {
+        $ownerColumn = 'seller_id';
+    }
+}
+
+if ($ownerColumn === '') {
+    $columnCheck = mysqli_query(
+        $link,
+        "SELECT COUNT(*) AS cnt FROM information_schema.columns WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'tbl_item' AND COLUMN_NAME = 'user_id'"
+    );
+    if ($columnCheck) {
+        $columnRow = mysqli_fetch_assoc($columnCheck);
+        if ((int) $columnRow['cnt'] > 0) {
+            $ownerColumn = 'user_id';
+        }
+    }
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
+    $itemName = mysqli_real_escape_string($link, trim($_POST['itemName']));
+    $description = mysqli_real_escape_string($link, trim($_POST['description']));
+    $category = mysqli_real_escape_string($link, trim($_POST['category']));
+    $price = (float) $_POST['price'];
+    $stock = (int) $_POST['stock'];
+
+    $imageName = '';
+    if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+        $targetDir = 'img/';
+        $extension = strtolower(pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION));
+        $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+
+        if (in_array($extension, $allowed)) {
+            $imageName = time() . '_' . basename($_FILES['image']['name']);
+            $targetFile = $targetDir . $imageName;
+
+            if (move_uploaded_file($_FILES['image']['tmp_name'], $targetFile)) {
+                $imageName = mysqli_real_escape_string($link, $imageName);
+            } else {
+                $message = 'Image upload failed.';
+            }
+        } else {
+            $message = 'Only JPG, PNG, GIF, and WEBP images are allowed.';
+        }
+    }
+
+    if ($message === '') {
+        $columns = ['ItemName', 'Description', 'Price', 'Quantity', 'Category'];
+        $values = [
+            "'$itemName'",
+            "'$description'",
+            $price,
+            $stock,
+            "'$category'"
+        ];
+
+        if ($ownerColumn !== '') {
+            $columns[] = $ownerColumn;
+            $values[] = $userId;
+        }
+
+        if ($imageName !== '') {
+            $columns[] = 'Image';
+            $values[] = "'$imageName'";
+        }
+
+        $sql = 'INSERT INTO tbl_item (' . implode(', ', $columns) . ') VALUES (' . implode(', ', $values) . ')';
+
+        if (mysqli_query($link, $sql)) {
+            header('Location: seller-Home.php');
+            exit();
+        } else {
+            $message = 'Failed to save listing: ' . mysqli_error($link);
+        }
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -326,14 +417,16 @@
             <a href="orders.php" class="nav-link">
                 <i class="bi bi-bag-fill"></i> <span>Orders</span>
             </a>
-            <a href="message.php" class="nav-link">
+            <!-- <a href="message.php" class="nav-link">
                 <i class="bi bi-chat-dots-fill"></i> <span>Messages</span>
-            </a>
+            </a> -->
         </nav>
 
-        <a href="seller_Dashboard.php" class="btn-new-listing">
-            Dashboard
-        </a>
+        <div class="mt-5">
+            <a href="login.php" class="btn btn-dark w-100">
+                <i class="bi bi-box-arrow-left"></i> Logout
+            </a>
+        </div>
     </aside>
 
     <!-- MAIN CONTENT -->
@@ -346,6 +439,11 @@
         </div>
 
         <!-- Form -->
+        <?php if (!empty($message)) { ?>
+            <div style="margin-bottom: 15px; padding: 12px 15px; background: #fff5f5; color: #c0392b; border: 1px solid #f5c6cb; border-radius: 6px;">
+                <?php echo htmlspecialchars($message); ?>
+            </div>
+        <?php } ?>
         <form action="" method="post" enctype="multipart/form-data">
             <div class="form-grid">
                 

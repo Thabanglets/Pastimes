@@ -258,7 +258,7 @@ if ($cartQuery) {
                 <div class="order-card">
                     <div class="order-top">
                         <div>
-                            <h5 class="mb-1">Order #<?php echo $orderId; ?></h5>
+                            <!-- <h5 class="mb-1">Order #<?php echo $orderId; ?></h5> -->
                             <small class="text-muted">Placed on <?php echo date('d M Y, h:i A', strtotime($order['order_date'])); ?></small>
                         </div>
                         <span class="status-badge <?php echo $statusClass; ?>"><?php echo ucfirst($status); ?></span>

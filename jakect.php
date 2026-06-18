@@ -2,16 +2,7 @@
 session_start();
 include("dbCon.php");
 
-$selectedCategory = isset($_GET['category']) ? strtolower(trim($_GET['category'])) : '';
-
-if ($selectedCategory === 'tops' || $selectedCategory === 'sweaters') {
-    $result = mysqli_query(
-        $link,
-        "SELECT * FROM tbl_item WHERE Gender = 'Female' AND (Category = 'tops' OR Category = 'sweaters')"
-    );
-} else {
-    $result = mysqli_query($link, "SELECT * FROM tbl_item WHERE Gender = 'Female'");
-}
+$result = mysqli_query($link, "SELECT * FROM tbl_item WHERE Category = 'Jackets'");
 
 $userData = null;
 $cartCount = 0;
@@ -88,7 +79,7 @@ if (isset($_POST['add'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pastimes || Womens Collection</title>
+    <title>Pastimes || Jackets</title>
     
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
@@ -283,12 +274,9 @@ if (isset($_POST['add'])) {
                 <div class="filter-sidebar pe-lg-4">
                     <div class="filter-group mb-4">
                         <h6>Categories</h6>
-                        <a href="womens_fashion.php" class="filter-link <?php echo empty($selectedCategory) ? 'active' : ''; ?>">All Women</a>
-
-                        <!-- <a href="womens_fashion.php?category=tops" class="filter-link <?php echo $selectedCategory === 'tops' || $selectedCategory === 'sweaters' ? 'active' : ''; ?>">Tops & Sweaters</a>
-
-                        <a href="womens_fashion.php?category=Dresses" class="filter-link <?php echo $selectedCategory === 'Dresses'  ? 'active' : ''; ?>">Dresses</a>
-                        <a href="#" class="filter-link">Pants</a> -->
+                        <a href="jacket.php" class="filter-link active">All jackets</a>
+                        <a href="#" class="filter-link">Dresses</a>
+                        <a href="#" class="filter-link">Pants</a>
                     </div>
                     
                 </div>
@@ -298,7 +286,7 @@ if (isset($_POST['add'])) {
             <div class="col-lg-9">
                 <!-- Sort/Header -->
                 <div class="d-flex justify-content-between align-items-center mb-4">
-                    
+                    <h4 class="m-0" style="font-weight: 300;">WOMAN'S COLLECTION</h4>
                     <span class="text-muted small">Showing <?php echo mysqli_num_rows($result); ?> items</span>
                 </div>
 

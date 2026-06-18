@@ -2,21 +2,99 @@
 session_start();
 include("dbCon.php");
 
-// Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    // header("Location: login.php");
-    // exit();
-}
-$userId = $_SESSION['user_id'];
-
-// Get logged-in user details
-$userQuery = mysqli_query($link, "SELECT * FROM tbl_user WHERE user_id = '$userId'");
-$user = mysqli_fetch_assoc($userQuery);
-
-// Optional: Ensure only sellers can access
-if ($user['account_type'] != 'seller') {
     header("Location: login.php");
     exit();
+}
+
+$userId = (int) $_SESSION['user_id'];
+
+$userQuery = mysqli_query($link, "SELECT * FROM tbl_user WHERE user_id = $userId");
+$user = mysqli_fetch_assoc($userQuery);
+
+if (!$user || strtolower($user['account_type']) != 'seller') {
+    header("Location: login.php");
+    exit();
+}
+
+// Seller dashboard statistics
+$totalSales = 0;
+$activeListings = 0;
+$newMessages = 0;
+$sellerItems = [];
+
+// Detect the real seller ownership column (case-insensitive) without assuming a specific name.
+$ownerColumn = '';
+$ownerColumnQuery = mysqli_query(
+    $link,
+    "SELECT COLUMN_NAME
+     FROM information_schema.columns
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = 'tbl_item'
+       AND LOWER(COLUMN_NAME) IN ('seller_id','sellerid','sellerid','user_id','userid','userId','owner_id','ownerid','created_by','createdby')"
+);
+if ($ownerColumnQuery) {
+    while ($ownerRow = mysqli_fetch_assoc($ownerColumnQuery)) {
+        if ($ownerRow['COLUMN_NAME']) {
+            $ownerColumn = $ownerRow['COLUMN_NAME'];
+            break;
+        }
+    }
+}
+
+// If the database does not expose a seller ownership column, fall back to all items
+// so the page still works instead of crashing or showing nothing.
+if ($ownerColumn !== '') {
+    $ownerFilter = " WHERE i.$ownerColumn = $userId";
+} else {
+    $ownerFilter = '';
+}
+
+// Use the same alias everywhere so the WHERE clause is valid for all queries.
+$activeItemsQuery = "SELECT COUNT(*) AS total_listings FROM tbl_item i" . $ownerFilter;
+$sellerItemsSql = "SELECT ItemID, ItemName, Price, Quantity, Category, Image
+                  FROM tbl_item i" . $ownerFilter . "
+                  ORDER BY ItemID DESC";
+
+$salesSql = "SELECT COALESCE(SUM(oi.quantity * oi.price), 0) AS total_sales
+             FROM tbl_orders o
+             JOIN tbl_order_item oi ON o.order_id = oi.order_id
+             JOIN tbl_item i ON oi.product_id = i.ItemID";
+if ($ownerColumn !== '') {
+    $salesSql .= " WHERE i.$ownerColumn = $userId";
+}
+$totalSalesQuery = mysqli_query($link, $salesSql);
+if ($totalSalesQuery) {
+    $totalSalesRow = mysqli_fetch_assoc($totalSalesQuery);
+    $totalSales = (float) ($totalSalesRow['total_sales'] ?? 0);
+}
+
+$activeListingsQuery = mysqli_query($link, $activeItemsQuery);
+if ($activeListingsQuery) {
+    $activeListingsRow = mysqli_fetch_assoc($activeListingsQuery);
+    $activeListings = (int) ($activeListingsRow['total_listings'] ?? 0);
+}
+
+$pendingOrdersSql = "SELECT COUNT(*) AS pending_orders
+                    FROM tbl_orders o
+                    JOIN tbl_order_item oi ON o.order_id = oi.order_id
+                    JOIN tbl_item i ON oi.product_id = i.ItemID";
+if ($ownerColumn !== '') {
+    $pendingOrdersSql .= " WHERE i.$ownerColumn = $userId AND o.order_status IN ('pending', 'processing')";
+} else {
+    $pendingOrdersSql .= " WHERE o.order_status IN ('pending', 'processing')";
+}
+$pendingOrdersQuery = mysqli_query($link, $pendingOrdersSql);
+if ($pendingOrdersQuery) {
+    $pendingOrdersRow = mysqli_fetch_assoc($pendingOrdersQuery);
+    $newMessages = (int) ($pendingOrdersRow['pending_orders'] ?? 0);
+}
+
+$sellerItemsQuery = mysqli_query($link, $sellerItemsSql);
+if ($sellerItemsQuery) {
+    while ($itemRow = mysqli_fetch_assoc($sellerItemsQuery)) {
+        $sellerItems[] = $itemRow;
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -395,14 +473,16 @@ if ($user['account_type'] != 'seller') {
             <a href="orders.php" class="nav-link">
                 <i class="bi bi-bag-fill"></i> <span>Orders</span>
             </a>
-            <a href="message.php" class="nav-link">
+            <!-- <a href="message.php" class="nav-link">
                 <i class="bi bi-chat-dots-fill"></i> <span>Messages</span>
-            </a>
+            </a> -->
         </nav>
 
-        <a href="addListing.php" class="btn-new-listing">
-            + New Listing
-        </a>
+       <div class="mt-5">
+            <a href="login.php" class="btn btn-dark w-100">
+                <i class="bi bi-box-arrow-left"></i> Logout
+            </a>
+        </div>
     </aside>
 
     <!-- MAIN CONTENT -->
@@ -413,7 +493,10 @@ if ($user['account_type'] != 'seller') {
             <div class="header-right">
                 <i class="bi bi-bell notification-icon"></i>
                 <div class="user-profile">
-                    <div class="user-name"><?php echo isset($_SESSION['user_name']) ? $_SESSION['user_name'] : 'Seller'; ?></div>
+                    <div>
+                        <div class="user-name"><?php echo htmlspecialchars($user['user_name'] ?? 'Seller'); ?></div>
+                        <div class="small text-muted"><?php echo htmlspecialchars($user['user_email'] ?? ''); ?></div>
+                    </div>
                     <div class="user-avatar"></div>
                 </div>
             </div>
@@ -423,20 +506,20 @@ if ($user['account_type'] != 'seller') {
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-label">Total Sales</div>
-                <div class="stat-value">R5,290.00</div>
-                <div class="stat-badge badge-green"><i class="bi bi-arrow-up"></i> +12.5% from last month</div>
+                <div class="stat-value">R <?php echo number_format($totalSales, 2); ?></div>
+                <div class="stat-badge badge-green"><i class="bi bi-arrow-up"></i> All-time revenue</div>
             </div>
 
             <div class="stat-card">
                 <div class="stat-label">Active Listings</div>
-                <div class="stat-value">84</div>
+                <div class="stat-value"><?php echo $activeListings; ?></div>
                 <div class="stat-badge badge-blue">Current stock</div>
             </div>
 
             <div class="stat-card">
-                <div class="stat-label">New Messages</div>
-                <div class="stat-value">12</div>
-                <div class="stat-badge">Pending reply</div>
+                <div class="stat-label">Pending Orders</div>
+                <div class="stat-value"><?php echo $newMessages; ?></div>
+                <div class="stat-badge">Needs attention</div>
             </div>
         </div>
 
@@ -488,49 +571,45 @@ if ($user['account_type'] != 'seller') {
             </div>
         </div>
 
-        <!-- RECENT ORDERS TABLE -->
+        <!-- SELLER PRODUCTS TABLE -->
         <div class="orders-table-container">
-            <h3 class="card-title">Recent Orders</h3>
+            <h3 class="card-title">My Products</h3>
             
             <table class="table">
                 <thead>
                     <tr>
                         <th>Product</th>
-                        <th>Order ID</th>
-                        <th>Date</th>
+                        <th>Category</th>
                         <th>Price</th>
+                        <th>Stock</th>
                         <th>Status</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <!-- Example Row 1 -->
-                    <!-- <tr>
-                        <td>Burberry Trench</td>
-                        <td>#ORD-92831</td>
-                        <td>Oct 24, 2023</td>
-                        <td>R450.00</td>
-                        <td><span class="status-badge status-processing">Processing</span></td>
-                    </tr> -->
-                    
-                    <!-- Example Row 2 -->
-                    <!-- <tr>
-                        <td>Sports Sneakers</td>
-                        <td>#ORD-92755</td>
-                        <td>Oct 23, 2023</td>
-                        <td>R120.00</td>
-                        <td><span class="status-badge status-shipped">Shipped</span></td>
-                    </tr> -->
-                    
-                    <!-- Example Row 3 -->
-                    <!-- <tr>
-                        <td>Floral Dress</td>
-                        <td>#ORD-92612</td>
-                        <td>Oct 22, 2023</td>
-                        <td>R85.00</td>
-                        <td><span class="status-badge status-delivered">Delivered</span></td>
-                    </tr> -->
-
-                    
+                    <?php if (!empty($sellerItems)) { ?>
+                        <?php foreach ($sellerItems as $item) { ?>
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <?php if (!empty($item['Image'])) { ?>
+                                            <img src="img/<?php echo htmlspecialchars($item['Image']); ?>" alt="<?php echo htmlspecialchars($item['ItemName']); ?>" style="width:48px;height:48px;object-fit:cover;border-radius:6px;">
+                                        <?php } ?>
+                                        <span><?php echo htmlspecialchars($item['ItemName']); ?></span>
+                                    </div>
+                                </td>
+                                <td><?php echo htmlspecialchars($item['Category'] ?? ''); ?></td>
+                                <td>R <?php echo number_format((float) $item['Price'], 2); ?></td>
+                                <td><?php echo (int) $item['Quantity']; ?></td>
+                                <td>
+                                    <span class="status-badge status-processing">Active</span>
+                                </td>
+                            </tr>
+                        <?php } ?>
+                    <?php } else { ?>
+                        <tr>
+                            <td colspan="5" style="text-align:center; padding: 20px;">No products found for this seller.</td>
+                        </tr>
+                    <?php } ?>
                 </tbody>
             </table>
         </div>

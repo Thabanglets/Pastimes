@@ -1,31 +1,165 @@
 <?php
 session_start();
 include("dbCon.php");
-$_SESSION['userid'];
-$data = "SELECT o.order_id,(u.user_name) AS name , (u.user_email) AS email,i.ItemName,o.order_date,(i.Price*c.quantity) AS Amount,o.order_status from 
-tbl_order_item oi 
-JOIN tbl_orders o ON oi.order_id = o.order_id 
-JOIN tbl_user u ON o.user_id = u.user_id 
-JOIN tbl_item i on i.ItemID = oi.product_id 
-JOIN tbl_cart c on i.ItemID = c.product_id";
-$resultView = mysqli_query($link,$data);
-$sql = "SELECT * FROM tbl_orders";
-$result = mysqli_query($link,$sql);
-$userQuery4 = mysqli_query($link, "SELECT COUNT(order_id) AS totalOrders FROM tbl_orders");
-$userQuery3 = mysqli_query($link, "SELECT COUNT(order_id) AS pendingOrders FROM tbl_orders WHERE order_status ='pending'");
-$userQuery2 = mysqli_query($link, "SELECT COUNT(order_id) AS shippedOrders FROM tbl_orders WHERE order_status ='shipped'");
-$userQuery1 = mysqli_query($link, "SELECT COUNT(order_id) AS deliveredOrders FROM tbl_orders WHERE order_status ='delivered'");
 
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit();
+}
 
-$orders = mysqli_fetch_assoc($userQuery4);
-$totalOrders = $orders['totalOrders'];
-$pendingOrders = mysqli_fetch_assoc($userQuery3);
-$pendingCount = $pendingOrders['pendingOrders'];
-$shippedOrders = mysqli_fetch_assoc($userQuery2);
-$shippedCount = $shippedOrders['shippedOrders'];
-$deliveredOrders = mysqli_fetch_assoc($userQuery1);
-$deliveredCount = $deliveredOrders['deliveredOrders'];
+$userId = (int) $_SESSION['user_id'];
 
+$userQuery = mysqli_query($link, "SELECT * FROM tbl_user WHERE user_id = $userId");
+$user = mysqli_fetch_assoc($userQuery);
+
+if (!$user || strtolower($user['account_type']) != 'seller') {
+    header("Location: login.php");
+    exit();
+}
+
+if (isset($_GET['action']) && isset($_GET['id'])) {
+    $orderId = (int) $_GET['id'];
+    $action = strtolower($_GET['action']);
+
+    if ($action === 'ship') {
+        $updateQuery = "UPDATE tbl_orders SET order_status = 'shipped' WHERE order_id = $orderId";
+    } elseif ($action === 'deliver') {
+        $updateQuery = "UPDATE tbl_orders SET order_status = 'delivered' WHERE order_id = $orderId";
+    } else {
+        $updateQuery = null;
+    }
+
+    if (!empty($updateQuery)) {
+        mysqli_query($link, $updateQuery);
+        header("Location: orders.php");
+        exit();
+    }
+}
+
+$ownerColumn = '';
+$ownerColumnQuery = mysqli_query(
+    $link,
+    "SELECT COLUMN_NAME
+     FROM information_schema.columns
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = 'tbl_item'
+       AND LOWER(COLUMN_NAME) IN ('seller_id','sellerid','user_id','userid','userid','userId','owner_id','ownerid','created_by','createdby')"
+);
+if ($ownerColumnQuery) {
+    while ($ownerRow = mysqli_fetch_assoc($ownerColumnQuery)) {
+        if (!empty($ownerRow['COLUMN_NAME'])) {
+            $ownerColumn = $ownerRow['COLUMN_NAME'];
+            break;
+        }
+    }
+}
+
+if ($ownerColumn !== '') {
+    $sellerFilter = " WHERE i.$ownerColumn = $userId";
+} else {
+    // Fallback: when the schema does not store a seller link on items,
+    // show only orders that belong to the logged-in user.
+    $sellerFilter = " WHERE o.user_id = $userId";
+}
+
+$data = "SELECT DISTINCT
+            o.order_id,
+            u.user_name AS name,
+            u.user_email AS email,
+            i.ItemName,
+            o.order_date,
+            oi.quantity,
+            oi.price,
+            (oi.quantity * oi.price) AS Amount,
+            o.order_status
+        FROM tbl_orders o
+        JOIN tbl_user u ON o.user_id = u.user_id
+        JOIN tbl_order_item oi ON oi.order_id = o.order_id
+        JOIN tbl_item i ON oi.product_id = i.ItemID";
+if ($sellerFilter !== '') {
+    $data .= $sellerFilter;
+}
+$data .= " ORDER BY o.order_date DESC";
+
+$resultView = mysqli_query($link, $data);
+
+$userQuery4 = mysqli_query(
+    $link,
+    "SELECT COUNT(DISTINCT o.order_id) AS totalOrders
+     FROM tbl_orders o
+     JOIN tbl_order_item oi ON oi.order_id = o.order_id
+     JOIN tbl_item i ON oi.product_id = i.ItemID" . $sellerFilter
+);
+
+$pendingFilter = $sellerFilter;
+if ($pendingFilter === '') {
+    $pendingFilter = ' WHERE o.order_status IN (\'pending\', \'processing\')';
+} else {
+    $pendingFilter .= " AND o.order_status IN ('pending', 'processing')";
+}
+$userQuery3 = mysqli_query(
+    $link,
+    "SELECT COUNT(DISTINCT o.order_id) AS pendingOrders
+     FROM tbl_orders o
+     JOIN tbl_order_item oi ON oi.order_id = o.order_id
+     JOIN tbl_item i ON oi.product_id = i.ItemID" . $pendingFilter
+);
+
+$shippedFilter = $sellerFilter;
+if ($shippedFilter === '') {
+    $shippedFilter = " WHERE o.order_status = 'shipped'";
+} else {
+    $shippedFilter .= " AND o.order_status = 'shipped'";
+}
+$userQuery2 = mysqli_query(
+    $link,
+    "SELECT COUNT(DISTINCT o.order_id) AS shippedOrders
+     FROM tbl_orders o
+     JOIN tbl_order_item oi ON oi.order_id = o.order_id
+     JOIN tbl_item i ON oi.product_id = i.ItemID" . $shippedFilter
+);
+
+$deliveredFilter = $sellerFilter;
+if ($deliveredFilter === '') {
+    $deliveredFilter = " WHERE o.order_status = 'delivered'";
+} else {
+    $deliveredFilter .= " AND o.order_status = 'delivered'";
+}
+$userQuery1 = mysqli_query(
+    $link,
+    "SELECT COUNT(DISTINCT o.order_id) AS deliveredOrders
+     FROM tbl_orders o
+     JOIN tbl_order_item oi ON oi.order_id = o.order_id
+     JOIN tbl_item i ON oi.product_id = i.ItemID" . $deliveredFilter
+);
+
+if ($userQuery4) {
+    $orders = mysqli_fetch_assoc($userQuery4);
+    $totalOrders = (int) $orders['totalOrders'];
+} else {
+    $totalOrders = 0;
+}
+
+if ($userQuery3) {
+    $pendingOrders = mysqli_fetch_assoc($userQuery3);
+    $pendingCount = (int) $pendingOrders['pendingOrders'];
+} else {
+    $pendingCount = 0;
+}
+
+if ($userQuery2) {
+    $shippedOrders = mysqli_fetch_assoc($userQuery2);
+    $shippedCount = (int) $shippedOrders['shippedOrders'];
+} else {
+    $shippedCount = 0;
+}
+
+if ($userQuery1) {
+    $deliveredOrders = mysqli_fetch_assoc($userQuery1);
+    $deliveredCount = (int) $deliveredOrders['deliveredOrders'];
+} else {
+    $deliveredCount = 0;
+}
 ?>
 
 <!DOCTYPE html>
@@ -407,14 +541,16 @@ $deliveredCount = $deliveredOrders['deliveredOrders'];
             <a href="orders.php" class="nav-link active">
                 <i class="bi bi-bag-fill"></i> <span>Orders</span>
             </a>
-            <a href="message.php" class="nav-link">
+            <!-- <a href="message.php" class="nav-link">
                 <i class="bi bi-chat-dots-fill"></i> <span>Messages</span>
-            </a>
+            </a> -->
         </nav>
 
-        <a href="addListing.php" class="btn-new-listing">
-            + New Listing
-        </a>
+        <div class="mt-5">
+            <a href="login.php" class="btn btn-dark w-100">
+                <i class="bi bi-box-arrow-left"></i> Logout
+            </a>
+        </div>
     </aside>
 
     <!-- MAIN CONTENT -->
@@ -425,12 +561,7 @@ $deliveredCount = $deliveredOrders['deliveredOrders'];
             <h1 class="page-title">Orders Management</h1>
         </div>
 
-        <?php 
-            if(mysqli_num_rows($result)>0){?>
-
-                <?php 
-                    while($row = mysqli_fetch_assoc($result)){?>
-                    <div class="stats-row">
+        <div class="stats-row">
                         <div class="stat-box active">
                             <div class="stat-count"><?php echo $totalOrders ?></div>
                             <div class="stat-label">All Orders</div>
@@ -448,13 +579,6 @@ $deliveredCount = $deliveredOrders['deliveredOrders'];
                             <div class="stat-label">Delivered</div>
                         </div>
                     </div>
-
-
-                   <?php }?>
-
-           <?php }
-        
-        ?>
         <!-- Stats Tabs -->
         
 
@@ -485,35 +609,53 @@ $deliveredCount = $deliveredOrders['deliveredOrders'];
                     </tr>
                 </thead>
                 <tbody>
-                   
-                    <?php while ($row = mysqli_fetch_assoc($resultView)) { ?>
+                    <?php
+                    if ($resultView && mysqli_num_rows($resultView) > 0) {
+                        while ($row = mysqli_fetch_assoc($resultView)) {
+                    ?>
                     <tr>
-                        <td>#ORD-<?php echo $row['order_id']; ?></td>
+                        <td>#ORD-<?php echo (int) $row['order_id']; ?></td>
                         <td>
                             <div class="customer-cell">
-                                <div class="customer-avatar"><?php echo substr($row['name'], 0, 1); ?></div>
+                                <div class="customer-avatar"><?php echo htmlspecialchars(substr($row['name'], 0, 1)); ?></div>
                                 <div class="customer-info">
-                                    <h4><?php echo $row['name']; ?></h4>
-                                    <p><?php echo $row['email']; ?></p>
+                                    <h4><?php echo htmlspecialchars($row['name']); ?></h4>
+                                    <p><?php echo htmlspecialchars($row['email']); ?></p>
                                 </div>
                             </div>
                         </td>
-                        <td><?php echo $row['ItemName']; ?></td>
-                        <td><?php echo $row['order_date']; ?></td>
-                        <td>R <?php echo number_format($row['Amount'], 2); ?></td>
+                        <td><?php echo htmlspecialchars($row['ItemName']); ?></td>
+                        <td><?php echo htmlspecialchars($row['order_date']); ?></td>
+                        <td>R <?php echo number_format((float) $row['Amount'], 2); ?></td>
                         <td>
                             <span class="status-badge badge-<?php echo strtolower($row['order_status']); ?>">
-                                <?php echo $row['order_status']; ?>
+                                <?php echo htmlspecialchars($row['order_status']); ?>
                             </span>
                         </td>
                         <td>
-                            <a href="view_order.php?id=<?php echo $row['order_id']; ?>" class="action-btn">View</a>
-                            <?php if($row['order_status'] == 'Processing') { ?>
-                            <a href="ship_order.php?id=<?php echo $row['order_id']; ?>" class="action-btn">Ship</a>
+                            <a href="view_order.php?id=<?php echo (int) $row['order_id']; ?>" class="action-btn">View</a>
+
+                            <?php
+                            $status = strtolower($row['order_status']);
+                            if ($status === 'pending' || $status === 'processing') {
+                            ?>
+                                <a href="orders.php?action=ship&id=<?php echo (int) $row['order_id']; ?>" class="action-btn">Ship</a>
+                            <?php } elseif ($status === 'shipped') { ?>
+                                <a href="orders.php?action=deliver&id=<?php echo (int) $row['order_id']; ?>" class="action-btn">Delivered</a>
+                            <?php } else { ?>
+                                <span class="action-btn" style="opacity:0.7; cursor:default;">Completed</span>
                             <?php } ?>
                         </td>
                     </tr>
-                    <?php } ?> 
+                    <?php
+                        }
+                    } else {
+                    ?>
+                    <tr>
+                        <td colspan="7" style="text-align:center; padding:20px;">No orders found for this seller.</td>
+                    </tr>
+                    <?php } ?>
+                </tbody>
                 </tbody>
             </table>
         </div>

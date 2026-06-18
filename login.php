@@ -10,8 +10,8 @@ $error = "";
 if (isset($_POST['login'])) {
 
     $email = trim($_POST['email'] ?? '');
-    $password = md5(trim($_POST['pass'] ?? ''));
-    // $password = trim($_POST['pass'] ?? '');
+    // $password = md5(trim($_POST['pass'] ?? ''));
+    $password = trim($_POST['pass'] ?? '');
 
     if (empty($email) || empty($password)) {
         $error = "Please fill in all fields.";
@@ -19,6 +19,7 @@ if (isset($_POST['login'])) {
 
         $sql = "SELECT 
                     user_id,
+                    user_name,
                     user_email,
                     user_password,
                     account_type,
@@ -56,6 +57,7 @@ if (isset($_POST['login'])) {
                 if (strtolower(trim($row['account_status'])) === 'approved') {
 
                     $_SESSION['user_id'] = $row['user_id'];
+                    $_SESSION['user_name'] = $row['user_name'];
                     $_SESSION['email'] = $row['user_email'];
                     $_SESSION['role'] = $row['account_type'];
 

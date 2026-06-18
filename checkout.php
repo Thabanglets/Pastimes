@@ -1,63 +1,81 @@
 <?php
-    include("dbCon.php");
-    session_start();
-$_SESSION['userid'] = 1;
+include("dbCon.php");
+session_start();
 
- $userId = $_SESSION['userid'];
-    $sql ="SELECT i.Image,i.ItemName,i.Price,c.quantity,(i.Price *c.quantity) AS SubTotal 
-            FROM tbl_cart c
-            JOIN tbl_item i  ON c.product_id = i.ItemID";
-    $user = "SELECT * FROM tbl_user WHERE user_id = $userId";
-    $data = mysqli_query($link,$user);
-    $totalprice = mysqli_fetch_assoc(mysqli_query($link, "SELECT SUM(i.Price *c.quantity) AS total FROM tbl_cart c JOIN tbl_item i  ON c.product_id = i.ItemID"))['total'];
-    $result = mysqli_query($link, $sql);
-
-    if(isset($_POST['add'])){
-
-    $id = $_POST['itemId'];
-    // $price = $_POST['totalPrice'];
-    // $quan = $_POST['quantity'];
-
-    if (!isset($_SESSION['userid'])) {
-        die("User not logged in");
-    }
-
-   
-    $sql = "SELECT i.ItemName,c.quantity,(i.Price *c.quantity) AS Total 
-            FROM tbl_cart c 
-            JOIN tbl_item i ON c.product_id = i.ItemID 
-            WHERE user_id = '$userId'";
-    
-    $cartQuery = mysqli_query($link,$sql );
-
-    $sql = "INSERT INTO tbl_orders (user_id,total_price)
-            VALUES ('$userId','$totalprice')";
-        mysqli_query($link, $sql);
-
-    $orderId = mysqli_insert_id($link);
-
-    while($cartItem = mysqli_fetch_assoc($cartQuery)){
-
-    $itemId = $cartItem['product_id'];
-    $quantity = $cartItem['quantity'];
-    $Price = $cartItem['Total'];
-    $ItemName = $cartItem['ItemName'];
-
-    mysqli_query($link,
-        "INSERT INTO tbl_order_item(order_id, product_id,quantity,price,item_name)
-         VALUES('$orderId', '$itemId', '$quantity', '$Price', '$ItemName')"
-    );
-}
-    
-    //  $sql = "DELETE FROM tbl_cart WHERE user_id = $userId";
-    //     mysqli_query($link, $sql);
-
-    header("Location:cart.php");
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
     exit();
-    
 }
 
+$userId = (int) $_SESSION['user_id'];
 
+$sql = "SELECT
+            i.Image,
+            i.ItemName,
+            i.Price,
+            c.quantity,
+            (i.Price * c.quantity) AS SubTotal
+        FROM tbl_cart c
+        JOIN tbl_item i ON c.product_id = i.ItemID
+        WHERE c.user_id = $userId";
+
+$user = "SELECT * FROM tbl_user WHERE user_id = $userId";
+$data = mysqli_query($link, $user);
+
+$totalQuery = mysqli_query(
+    $link,
+    "SELECT SUM(i.Price * c.quantity) AS total
+     FROM tbl_cart c
+     JOIN tbl_item i ON c.product_id = i.ItemID
+     WHERE c.user_id = $userId"
+);
+
+$totalprice = 0;
+if ($totalQuery) {
+    $row = mysqli_fetch_assoc($totalQuery);
+    $totalprice = isset($row['total']) ? (float) $row['total'] : 0;
+}
+
+$result = mysqli_query($link, $sql);
+
+if (isset($_POST['add'])) {
+    $cartQuery = mysqli_query(
+        $link,
+        "SELECT c.product_id, c.quantity, i.ItemName, (i.Price * c.quantity) AS Total
+         FROM tbl_cart c
+         JOIN tbl_item i ON c.product_id = i.ItemID
+         WHERE c.user_id = $userId"
+    );
+
+    if ($cartQuery && mysqli_num_rows($cartQuery) > 0) {
+        $insertOrder = mysqli_query(
+            $link,
+            "INSERT INTO tbl_orders (user_id, total_price)
+             VALUES ($userId, $totalprice)"
+        );
+
+        if ($insertOrder) {
+            $orderId = mysqli_insert_id($link);
+
+            while ($cartItem = mysqli_fetch_assoc($cartQuery)) {
+                $itemId = (int) $cartItem['product_id'];
+                $quantity = (int) $cartItem['quantity'];
+                $price = (float) $cartItem['Total'];
+                $itemName = $cartItem['ItemName'];
+
+                mysqli_query(
+                    $link,
+                    "INSERT INTO tbl_order_item (order_id, product_id, quantity, price, item_name)
+                     VALUES ($orderId, $itemId, $quantity, $price, '$itemName')"
+                );
+            }
+
+            mysqli_query($link, "DELETE FROM tbl_cart WHERE user_id = $userId");
+            header("Location: track_order.php");
+            exit();
+        }
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -263,6 +281,7 @@ $_SESSION['userid'] = 1;
 
                 <div class="d-none d-lg-flex align-items-center">
                     <a href="#profile" class="nav-link-custom">Account</a>
+                    <a href="track_order.php" class="nav-link-custom">Track Orders</a>
                     <a href="cart.php" class="nav-link-custom">Cart</a>
                 </div>
             </div>

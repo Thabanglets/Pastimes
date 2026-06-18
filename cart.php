@@ -7,7 +7,7 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-$userId = $_SESSION['user_id'];
+$userId = (int) $_SESSION['user_id'];
 
 $sql = "SELECT
         i.Image,
@@ -17,16 +17,17 @@ $sql = "SELECT
         (i.Price * c.quantity) AS SubTotal
     FROM tbl_cart c
     JOIN tbl_item i ON c.product_id = i.ItemID
-    WHERE c.user_id = '$userId'
+    WHERE c.user_id = $userId
 ";
+
 $cartQuery = mysqli_query($link, "SELECT COUNT(*) AS cart
         FROM tbl_cart
-        WHERE user_id = '$userId'
+        WHERE user_id = $userId
     ");
 
-    $cartData = mysqli_fetch_assoc($cartQuery);
-    $cartCount = $cartData['cart'];
-    
+$cartData = mysqli_fetch_assoc($cartQuery);
+$cartCount = isset($cartData['cart']) ? (int) $cartData['cart'] : 0;
+
 $result = mysqli_query($link, $sql);
 
 // Total for logged-in user only
@@ -35,10 +36,14 @@ $totalQuery = mysqli_query(
     "SELECT SUM(i.Price * c.quantity) AS total
      FROM tbl_cart c
      JOIN tbl_item i ON c.product_id = i.ItemID
-     WHERE c.user_id = '$userId'"
+     WHERE c.user_id = $userId"
 );
 
-$totalprice = mysqli_fetch_assoc($totalQuery)['total'] ?? 0;
+$totalprice = 0;
+if ($totalQuery) {
+    $totalRow = mysqli_fetch_assoc($totalQuery);
+    $totalprice = isset($totalRow['total']) ? (float) $totalRow['total'] : 0;
+}
 ?>
     
 <!DOCTYPE html>
@@ -271,6 +276,7 @@ $totalprice = mysqli_fetch_assoc($totalQuery)['total'] ?? 0;
 
                 <div class="d-none d-lg-flex align-items-center">
                     <a href="#profile" class="nav-link-custom">Account</a>
+                    <a href="track_order.php" class="nav-link-custom">Track Orders</a>
                     <a href="cart.php" class="nav-link-custom">
                         Cart 
                         <!-- Placeholder for Cart Count PHP -->

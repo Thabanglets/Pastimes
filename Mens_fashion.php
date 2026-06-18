@@ -265,15 +265,7 @@ if (isset($_POST['add'])) {
             </div>
         </nav>
     </header>
-<div class="container mt-3">
-    <h5>Welcome,
-        <?php echo htmlspecialchars($userData['user_name']); ?>
-    </h5>
 
-    <p>Email:
-        <?php echo htmlspecialchars($userData['user_email']); ?>
-    </p>
-</div>
     <div class="container page-wrapper">
         <div class="row">
             <!-- SIDEBAR FILTERS -->

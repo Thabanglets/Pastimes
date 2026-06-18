@@ -10,8 +10,8 @@ $error = "";
 if (isset($_POST['login'])) {
 
     $email = trim($_POST['email'] ?? '');
-    // $password = md5(trim($_POST['pass'] ?? ''));
-    $password = trim($_POST['pass'] ?? '');
+    $password = md5(trim($_POST['pass'] ?? ''));
+    // $password = trim($_POST['pass'] ?? '');
 
     if (empty($email) || empty($password)) {
         $error = "Please fill in all fields.";

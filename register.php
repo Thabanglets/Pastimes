@@ -1,14 +1,42 @@
+<?php
+include("dbCon.php");
+
+$message = "";
+
+if (isset($_POST['add'])) {
+    $fName = trim($_POST['user_name']);
+    $email = trim($_POST['user_email']);
+    $pass = $_POST['user_password'];
+    $aType = isset($_POST['account_type']) ? $_POST['account_type'] : '';
+
+    if ($fName === '' || $email === '' || $pass === '' || $aType === '') {
+        $message = "Please fill in all fields.";
+    } else {
+        $hashedPass = md5($pass);
+        $Astatus = "pending";
+
+        $sql = "INSERT INTO tbl_user (user_name, user_email, user_password, account_type, account_status)
+                VALUES ('$fName', '$email', '$hashedPass', '$aType', '$Astatus')";
+
+        if (mysqli_query($link, $sql)) {
+            header("Location: login.php");
+            exit();
+        } else {
+            $message = "User not added: " . mysqli_error($link);
+        }
+    }
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"> -->
     <link rel="stylesheet" href="css/regi-style.css">
-    <title>Document</title>
+    <title>Register</title>
 </head>
 <body>
-
     <div class="container">
         <div class="side-panel">
             <img src="img/regi_img.png" alt="Background" class="bg-image">
@@ -25,65 +53,45 @@
                 <h4>Account Type</h4>
                 <br>
                 <form action="register.php" method="POST">
-                   
-        <div >
-            <div class="radio-group">
-                <label class="radio-card">
-                <input type="radio" name="account_type" value="buyer">
-                <span class="card-content">Buyer</span>
-                </label>
-                
-                <label class="radio-card">
-                <input type="radio" name="account_type" value="seller">
-                <span class="card-content">Seller</span>
-                </label>
+                    <div>
+                        <div class="radio-group">
+                            <label class="radio-card">
+                                <input type="radio" name="account_type" value="buyer">
+                                <span class="card-content">Buyer</span>
+                            </label>
 
-                <label class="radio-card">
-                <input type="radio" name="account_type" value="admin">
-                <span class="card-content">Admin</span>
-                </label>
-            </div>
-        </div>
-        <br>
-                    
-                    <input type="text" placeholder="Full Name"  name="user_name">
+                            <label class="radio-card">
+                                <input type="radio" name="account_type" value="seller">
+                                <span class="card-content">Seller</span>
+                            </label>
+
+                            <label class="radio-card">
+                                <input type="radio" name="account_type" value="admin">
+                                <span class="card-content">Admin</span>
+                            </label>
+                        </div>
+                    </div>
+                    <br>
+
+                    <input type="text" placeholder="Full Name" name="user_name">
                     <input type="email" placeholder="Email Address" name="user_email">
                     <input type="password" placeholder="Password" name="user_password">
-                    
-                    <button type="add"  name="add" class="primary-btn">
+
+                    <button type="submit" name="add" class="primary-btn">
                         Create Account →
                     </button>
                 </form>
+
+                <?php if ($message !== "") { ?>
+                    <p style="color:red; margin-top:10px;"><?php echo $message; ?></p>
+                <?php } ?>
+
                 <br>
                 <p>
-                    don't have an account? <a href="login.php">Sign in</a>
+                    Already have an account? <a href="login.php">Sign in</a>
                 </p>
             </div>
         </div>
     </div>
-
 </body>
 </html>
-
-<?php 
-include("dbCon.php");
-
-if(isset($_POST['add'])){
-    $fName = $_POST['user_name'];
-$email = $_POST['user_email'];
-$pass = md5($_POST['user_password']);
-$aType = $_POST['account_type'];
-$Astatus = "pending";
-
-$sql ="INSERT INTO tbl_user(user_name,user_email,user_password,account_type,account_status)VALUES('$fName','$email','$pass','$aType','$Astatus')";
-
-if(mysqli_query($link,$sql)){
-    echo"user added";
-    header("Location:login.php");
-}else{
-    echo"user not added";
-
-}
-}
-
-?>
